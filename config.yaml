@@ -1,0 +1,290 @@
+# ============================================================================
+# BountyRecon v2.0 — Master Configuration
+# ============================================================================
+
+# ── General ─────────────────────────────────────────────────────────────────
+general:
+  threads: 50
+  timeout: 30
+  verbose: true
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+# ── Rate Limiting ───────────────────────────────────────────────────────────
+rate_limiting:
+  global_delay: 0
+  per_host_delay: 0.1
+
+# ── Callback Server (for blind vulnerability testing) ──────────────────────
+callback_server:
+  enabled: false
+  port: 8888
+  # collaborator_url: "http://YOUR_IP:8888"  # Set to your public callback URL
+
+# ── HackerOne Reporting ─────────────────────────────────────────────────────
+h1_reporting:
+  auto_generate: true
+  include_poc: true
+  include_remediation: true
+
+# ============================================================================
+#  RECON MODULES
+# ============================================================================
+
+subdomain_enum:
+  use_subfinder: true
+  use_amass: true
+  use_assetfinder: true
+  use_findomain: true
+  use_crtsh: true
+  use_github_subdomains: false
+  use_shuffledns: false
+  amass_timeout: 15
+  subfinder_threads: 30
+  wordlist: ""
+  github_token: ""
+
+technologies:
+  ports: "80,443,8080,8443,8000,3000,5000,9090"
+  rate_limit: 50
+  follow_redirects: true
+  status_codes: "200,201,204,301,302,307,308,401,403,405,500"
+  use_whatweb: true
+  use_wafw00f: true
+
+port_scan:
+  top_ports: "1000"
+  scan_type: "s"
+  rate_limit: 1000
+  use_masscan: true
+  use_nmap_sV: false
+  nmap_scripts: ""
+  exclude_ports: ""
+
+screenshots:
+  use_gowitness: true
+  use_eyewitness: false
+  timeout: 10
+  resolution: "1440,900"
+  threads: 8
+
+content_discovery:
+  wordlist: "wordlists/common.txt"  # Falls back to /usr/share/wordlists/dirb/common.txt
+  extensions: ".php,.html,.js,.json,.xml,.txt,.bak,.conf,.env,.sql,.log"
+  threads: 40
+  rate_limit: 100
+  recursion_depth: 0
+  follow_redirects: false
+  filter_status: "404"
+  match_status: "200,204,301,302,307,401,403,405,500"
+  use_katana: true
+  use_gospider: true
+  katana_depth: 3
+
+links:
+  use_gau: true
+  use_waybackurls: true
+  use_waymore: false
+  use_urlfinder: false
+
+parameters:
+  use_arjun: true
+  use_paramspider: true
+  use_x8: false
+  arjun_threads: 10
+
+fuzzing:
+  wordlist: "/usr/share/wordlists/SecLists/Fuzzing/fuzz-Bo0oM.txt"
+  threads: 40
+  rate_limit: 100
+  match_status: "200,204,301,302,307,500"
+
+waf_evasion:
+  use_nomore403: true
+  use_forbidden_buster: false
+
+# ============================================================================
+#  EXPLOIT MODULES
+# ============================================================================
+
+cors:
+  use_corsy: true
+  use_corstest: false
+  threads: 20
+
+crlf:
+  use_crlfuzz: true
+  use_crlfsuite: false
+  threads: 20
+  rate_limit: 50
+
+sqli:
+  use_sqlmap: true
+  use_ghauri: true
+  use_nosqli: false
+  sqlmap_level: 1
+  sqlmap_risk: 1
+  sqlmap_batch: true
+  sqlmap_tamper: ""
+
+xss:
+  use_dalfox: true
+  use_kxss: true
+  dalfox_threads: 10
+  blind_xss_url: ""
+
+ssrf:
+  use_gf_patterns: true
+  keywords: "url,redirect,uri,path,next,data,reference,site,html,val,view,file,page,callback,return,feed,host,port,to,out,domain,window"
+  collaborator_url: ""
+
+open_redirect:
+  use_oralyzer: true
+  use_openredirex: false
+  payload_file: ""
+
+smuggling:
+  use_smuggler: true
+  use_h2csmuggler: true
+  timeout: 10
+
+command_injection:
+  use_commix: true
+  commix_level: 1
+
+lfi:
+  use_gf_patterns: true
+  keywords: "file,path,include,page,dir,document,folder,root,pg,style,pdf,template,php_path,doc"
+
+graphql:
+  use_graphw00f: true
+  use_clairvoyance: true
+
+header_injection:
+  use_headi: true
+
+ssti:
+  use_sstimap: true
+  use_tplmap: false
+
+cache_poisoning:
+  use_toxicache: true
+
+csrf:
+  use_bolt: true
+
+xxe:
+  use_nuclei_xxe: true
+  rate_limit: 50
+
+idor:
+  use_gf: true
+
+race_condition:
+  use_nuclei_race: true
+  rate_limit: 30
+
+directory_traversal:
+  use_nuclei_traversal: true
+  use_gf: true
+  rate_limit: 50
+
+deserialization:
+  use_nuclei_deser: true
+  rate_limit: 50
+
+postmessage:
+  use_nuclei_pm: true
+  rate_limit: 50
+
+# ============================================================================
+#  MISCELLANEOUS MODULES
+# ============================================================================
+
+passwords:
+  use_nuclei_defaults: true
+  rate_limit: 30
+
+secrets:
+  use_secretfinder: true
+  use_noseyparker: false
+  use_gitleaks: false
+  regex_patterns:
+    - "(?i)(api[_-]?key|apikey|secret|token|password|passwd|auth)[\\s]*[=:][\\s]*['\"]?[A-Za-z0-9/+=]{16,}"
+
+git_exposure:
+  use_git_dumper: true
+  timeout: 15
+
+buckets:
+  use_s3scanner: true
+  use_cloudbrute: false
+  keyword_file: ""
+
+cms:
+  use_wpscan: true
+  use_joomscan: true
+  use_cmsmap: false
+  wpscan_api_token: ""
+
+jwt:
+  use_jwt_tool: true
+  mode: "at"
+
+subdomain_takeover:
+  use_subzy: true
+  use_subjack: true
+  use_dnsreaper: false
+  concurrency: 20
+
+vuln_scanners:
+  use_nuclei: true
+  use_nikto: true
+  nuclei_severity: "critical,high,medium"
+  nuclei_rate_limit: 50
+  nuclei_bulk_size: 25
+  nuclei_templates:
+    - "cves/"
+    - "vulnerabilities/"
+    - "misconfiguration/"
+    - "exposed-panels/"
+    - "exposures/"
+    - "default-logins/"
+  nuclei_exclude_templates:
+    - "dos/"
+    - "fuzzing/"
+
+permutation:
+  use_alterx: true
+  use_gotator: false
+  use_dnsgen: false
+  use_puredns: true
+  resolvers: "/usr/share/wordlists/SecLists/Discovery/DNS/resolvers.txt"
+
+forbidden_bypass:
+  use_nomore403: true
+
+origin_ip:
+  use_hakoriginfinder: true
+  censys_api_id: ""
+  censys_api_secret: ""
+
+content_filtering:
+  use_uro: true
+  filter_noise: true
+  noise_patterns:
+    - ".css"
+    - ".woff"
+    - ".woff2"
+    - ".ttf"
+    - ".eot"
+    - ".svg"
+    - ".ico"
+    - ".png"
+    - ".jpg"
+    - ".jpeg"
+    - ".gif"
+    - ".webp"
+    - "fonts.googleapis.com"
+    - "google-analytics.com"
+
+monitoring: {}

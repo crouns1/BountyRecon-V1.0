@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "target": "https://waterlinks.org",
+    "generated_at": "2026-04-07T16:59:53.788105",
+    "phases_executed": [
+      "subdomain_enum",
+      "http_probe"
+    ],
+    "scope_enforcement": {
+      "in_scope_domains": 0,
+      "out_scope_domains": 0,
+      "out_scope_ips": 0,
+      "out_scope_cidrs": 0,
+      "out_scope_patterns": 0
+    }
+  },
+  "summary": {
+    "total_subdomains": 1,
+    "alive_hosts": 0,
+    "open_ports": 0,
+    "discovered_endpoints": 0,
+    "vulnerabilities": 0,
+    "vulnerability_breakdown": {}
+  },
+  "technologies": {},
+  "top_ports": {},
+  "alive_hosts": [],
+  "port_results": [],
+  "directory_findings": [],
+  "vulnerability_findings": []
+}
