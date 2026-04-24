@@ -18,6 +18,7 @@ import argparse
 import shutil
 import sys
 import time
+from urllib.parse import urlparse
 import yaml
 from datetime import datetime
 from pathlib import Path
@@ -59,6 +60,7 @@ from modules.exploit.idor import IDOR
 from modules.exploit.race_condition import RaceCondition
 from modules.exploit.deserialization import InsecureDeserialization
 from modules.exploit.postmessage import PostMessage
+from modules.exploit.clickjacking import Clickjacking
 
 from modules.misc.passwords import Passwords
 from modules.misc.secrets import Secrets
@@ -71,8 +73,12 @@ from modules.misc.vuln_scanners import VulnScanners
 from modules.misc.forbidden_bypass import ForbiddenBypass
 from modules.misc.permutation import Permutation
 from modules.misc.origin_ip import OriginIP
+from modules.misc.session_security import SessionSecurity
+from modules.misc.api_exposure import APIExposure
+from modules.misc.rate_limiting import RateLimiting
 
 from modules.reporter import generate_report
+from modules.ollama_analyzer import OllamaAnalyzer
 
 # Pipeline execution order
 RECON_MODULES = [
@@ -86,11 +92,13 @@ EXPLOIT_MODULES = [
     XXEInjection, SSRF, OpenRedirect, RequestSmuggling, CommandInjection,
     LFI, DirectoryTraversal, GraphQL, HeaderInjection, SSTI,
     CachePoisoning, IDOR, RaceCondition, InsecureDeserialization, PostMessage,
+    Clickjacking,
 ]
 
 MISC_MODULES = [
     Passwords, Secrets, GitExposure, Buckets, CMS, JWT,
     SubdomainTakeover, VulnScanners, ForbiddenBypass, Permutation, OriginIP,
+    SessionSecurity, APIExposure, RateLimiting,
 ]
 
 ALL_MODULES = RECON_MODULES + EXPLOIT_MODULES + MISC_MODULES
@@ -108,6 +116,18 @@ BANNER = r"""
     ─────────────────────────────────────────────────────
     Modules: {mod_count} | Tools: 40+ | Categories: Recon · Exploit · Misc
 """
+
+
+def normalize_target(target: str) -> str:
+    """Normalize a user-supplied target into a bare hostname/domain."""
+    value = (target or "").strip().lower()
+    if not value:
+        return ""
+
+    parsed = urlparse(value if "://" in value else f"//{value}")
+    host = parsed.netloc or parsed.path
+    host = host.split("/", 1)[0].split("@")[-1].split(":", 1)[0].strip(".")
+    return host
 
 
 def parse_args():
@@ -141,6 +161,10 @@ def parse_args():
     p.add_argument("--output", default="results", help="Base output directory")
     p.add_argument("--delay", type=float, default=0,
                    help="Delay between modules (seconds)")
+    p.add_argument("--ollama-analyze", action="store_true",
+                   help="Generate an AI assessment with a local Ollama instance")
+    p.add_argument("--ollama-model", default="",
+                   help="Override the Ollama model for AI assessment")
 
     # Utility
     p.add_argument("--list-modules", action="store_true",
@@ -238,10 +262,14 @@ def main():
         check_all_tools()
         return
 
-    if not args.domain:
+    normalized_domain = normalize_target(args.domain)
+    if not normalized_domain:
         print("[-] Error: -d/--domain is required for scanning.")
         print("    Usage: python3 bountyrecon.py -d target.com --full")
         sys.exit(1)
+    if normalized_domain != args.domain:
+        print(f"  [*] Normalized target: {args.domain} -> {normalized_domain}")
+    args.domain = normalized_domain
 
     module_classes = resolve_modules(args)
     config = load_config(args.config)
@@ -321,7 +349,7 @@ def main():
     print(f"  Elapsed: {elapsed:.1f}s")
     print(f"{'━' * 60}")
 
-    generate_report(
+    report_data, _, _ = generate_report(
         domain=args.domain,
         output_dir=output_dir,
         context=context,
@@ -329,6 +357,8 @@ def main():
         scope_stats=scope.get_stats(),
         elapsed=elapsed,
     )
+
+    _maybe_run_ollama_analysis(args, config, output_dir, report_data)
 
     # Generate HackerOne reports for vulnerabilities
     vulns = context.get("vuln_findings", [])
@@ -349,6 +379,38 @@ def main():
     print(f"  [+] Report:  {output_dir / 'report.md'}")
     if vulns:
         print(f"  [+] H1 Reports: {output_dir / 'h1_reports/'}")
+
+
+def _maybe_run_ollama_analysis(args, config: dict, output_dir: Path, report_data: dict):
+    ollama_cfg = config.get("ollama", {})
+    enabled = args.ollama_analyze or ollama_cfg.get("enabled", False)
+    if not enabled:
+        return
+
+    model = args.ollama_model or ollama_cfg.get("model", "llama3:8b")
+    endpoint = ollama_cfg.get("endpoint", "http://127.0.0.1:11434/api/generate")
+    timeout = int(ollama_cfg.get("timeout", 120))
+    prompt = ollama_cfg.get("prompt", "")
+
+    print(f"\n{'━' * 60}")
+    print("  GENERATING OLLAMA AI ASSESSMENT")
+    print(f"  Model:   {model}")
+    print(f"  API:     {endpoint}")
+    print(f"{'━' * 60}")
+
+    try:
+        analyzer = OllamaAnalyzer(
+            model=model,
+            endpoint=endpoint,
+            timeout=timeout,
+            prompt=prompt,
+        )
+        md_path, raw_path = analyzer.analyze(report_data, output_dir)
+        print("  [+] Ollama assessment saved:")
+        print(f"      Markdown: {md_path}")
+        print(f"      JSON:     {raw_path}")
+    except Exception as exc:
+        print(f"  [!] Ollama analysis failed: {exc}")
 
 
 def _update_findings_log(domain, output_dir, context, results):

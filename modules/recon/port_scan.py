@@ -32,26 +32,26 @@ class PortScan(BaseModule):
             out = self.phase_dir / "naabu.json"
             self.exec([
                 "naabu", "-list", str(input_file),
-                "-top-ports", str(cfg.get("top_ports", "1000")),
-                "-rate", str(cfg.get("rate", 1000)),
+                "-top-ports", str(self.config_get("top_ports", "1000")),
+                "-rate", str(self.config_get("rate", 1000, "rate_limit")),
                 "-silent", "-json", "-o", str(out),
             ], timeout=1200, label="naabu")
             all_ports.extend(self._parse_naabu(out))
 
         # --- masscan ---
-        if cfg.get("use_masscan", False) and self.tool_exists("masscan"):
+        if self.config_get("use_masscan", False) and self.tool_exists("masscan"):
             out = self.phase_dir / "masscan.json"
-            ports = cfg.get("masscan_ports", "1-65535")
+            ports = self.config_get("masscan_ports", "1-65535")
             self.exec([
                 "masscan", "-iL", str(input_file),
                 "-p", str(ports),
-                "--rate", str(cfg.get("masscan_rate", 10000)),
+                "--rate", str(self.config_get("masscan_rate", 10000)),
                 "-oJ", str(out),
             ], timeout=1800, label="masscan")
             all_ports.extend(self._parse_masscan(out))
 
         # --- nmap service detection on found ports ---
-        if cfg.get("use_nmap_service", False) and self.tool_exists("nmap") and all_ports:
+        if self.config_get("use_nmap_service", False, "use_nmap_sV") and self.tool_exists("nmap") and all_ports:
             self._nmap_service_scan(all_ports)
 
         # Deduplicate

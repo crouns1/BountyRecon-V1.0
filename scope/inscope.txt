@@ -1,6 +1,0 @@
-# In-Scope Domains for HackerOne Program
-# One entry per line. Wildcards (*.example.com) are supported.
-# Lines starting with # are comments.
-
-*.example.com
-example.com

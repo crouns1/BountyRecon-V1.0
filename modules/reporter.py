@@ -39,6 +39,8 @@ def generate_report(
     print(f"      JSON:     {json_path}")
     print(f"      Markdown: {md_path}")
 
+    return report_data, json_path, md_path
+
 
 def _build_report_data(
     domain: str,

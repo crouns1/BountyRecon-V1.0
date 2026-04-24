@@ -9,6 +9,7 @@ import re
 import ipaddress
 from pathlib import Path
 from typing import List, Set
+from urllib.parse import urlparse
 
 
 class ScopeEnforcer:
@@ -32,8 +33,7 @@ class ScopeEnforcer:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#"):
-                    # Normalize: *.example.com -> example.com (wildcard is implicit)
-                    cleaned = line.lstrip("*.")
+                    cleaned = self._normalize_domain_rule(line)
                     self.in_scope_domains.add(cleaned.lower())
 
     def _load_outscope(self, filepath: str):
@@ -75,8 +75,16 @@ class ScopeEnforcer:
                     pass
 
                 # Domain (possibly with wildcard)
-                cleaned = line.lstrip("*.").lower()
+                cleaned = self._normalize_domain_rule(line)
                 self.out_scope_domains.add(cleaned)
+
+    def _normalize_domain_rule(self, value: str) -> str:
+        value = value.strip()
+        wildcard = value.startswith("*.")
+        parsed = urlparse(value if "://" in value else f"//{value.lstrip('*.')}")
+        host = parsed.netloc or parsed.path
+        host = host.split("/", 1)[0].split("@")[-1].split(":", 1)[0].strip(".").lower()
+        return host if not wildcard else host
 
     def is_in_scope(self, asset: str) -> bool:
         """

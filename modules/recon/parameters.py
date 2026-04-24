@@ -27,13 +27,13 @@ class Parameters(BaseModule):
 
         # --- Arjun ---
         if cfg.get("use_arjun", True) and self.tool_exists("arjun"):
-            url_file = self.write_targets(urls[:cfg.get("max_targets", 20)], "arjun_targets.txt")
+            url_file = self.write_targets(urls[:self.config_get("max_targets", 20)], "arjun_targets.txt")
             out = self.phase_dir / "arjun_results.json"
             self.exec([
                 "arjun", "-i", str(url_file),
                 "-oJ", str(out),
-                "-t", str(cfg.get("threads", 10)),
-                "--rate-limit", str(cfg.get("rate_limit", 30)),
+                "-t", str(self.config_get("threads", 10, "arjun_threads")),
+                "--rate-limit", str(self.config_get("rate_limit", 30)),
                 "-q",
             ], timeout=1200, label="arjun")
 

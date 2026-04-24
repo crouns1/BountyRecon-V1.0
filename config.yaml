@@ -26,6 +26,14 @@ h1_reporting:
   include_poc: true
   include_remediation: true
 
+# ── Optional Local AI Assessment (Ollama) ──────────────────────────────────
+ollama:
+  enabled: false
+  model: "llama3:8b"
+  endpoint: "http://127.0.0.1:11434/api/generate"
+  timeout: 120
+  prompt: ""
+
 # ============================================================================
 #  RECON MODULES
 # ============================================================================
@@ -131,11 +139,13 @@ xss:
   use_kxss: true
   dalfox_threads: 10
   blind_xss_url: ""
+  param_hints_file: ""
 
 ssrf:
   use_gf_patterns: true
   keywords: "url,redirect,uri,path,next,data,reference,site,html,val,view,file,page,callback,return,feed,host,port,to,out,domain,window"
   collaborator_url: ""
+  payload_file: ""
 
 open_redirect:
   use_oralyzer: true
@@ -150,14 +160,17 @@ smuggling:
 command_injection:
   use_commix: true
   commix_level: 1
+  param_hints_file: ""
 
 lfi:
   use_gf_patterns: true
   keywords: "file,path,include,page,dir,document,folder,root,pg,style,pdf,template,php_path,doc"
+  payload_file: ""
 
 graphql:
   use_graphw00f: true
   use_clairvoyance: true
+  paths_file: ""
 
 header_injection:
   use_headi: true
@@ -165,16 +178,19 @@ header_injection:
 ssti:
   use_sstimap: true
   use_tplmap: false
+  detection_payload_file: ""
 
 cache_poisoning:
   use_toxicache: true
 
 csrf:
   use_bolt: true
+  state_change_file: ""
 
 xxe:
   use_nuclei_xxe: true
   rate_limit: 50
+  indicator_file: ""
 
 idor:
   use_gf: true
@@ -195,6 +211,9 @@ deserialization:
 postmessage:
   use_nuclei_pm: true
   rate_limit: 50
+
+clickjacking:
+  max_targets: 100
 
 # ============================================================================
 #  MISCELLANEOUS MODULES
@@ -267,6 +286,15 @@ origin_ip:
   use_hakoriginfinder: true
   censys_api_id: ""
   censys_api_secret: ""
+
+session_security:
+  max_targets: 60
+
+api_exposure:
+  max_targets: 40
+
+rate_limiting:
+  max_targets: 25
 
 content_filtering:
   use_uro: true

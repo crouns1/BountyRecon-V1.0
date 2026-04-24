@@ -31,7 +31,7 @@ class SubdomainEnum(BaseModule):
             out = self.phase_dir / "subfinder.txt"
             self.exec([
                 "subfinder", "-d", domain, "-silent", "-all",
-                "-t", str(cfg.get("threads", 50)),
+                "-t", str(self.config_get("threads", 50, "subfinder_threads")),
                 "-o", str(out),
             ], timeout=600, label="subfinder")
             all_subs |= self.read_lines(out)
@@ -84,7 +84,7 @@ class SubdomainEnum(BaseModule):
             out = self.phase_dir / "shuffledns.txt"
             self.exec([
                 "shuffledns", "-d", domain, "-w", wordlist,
-                "-r", cfg.get("resolvers", "/usr/share/wordlists/resolvers.txt"),
+                "-r", self.config_get("resolvers", "/usr/share/wordlists/resolvers.txt"),
                 "-o", str(out), "-silent",
             ], timeout=1800, label="shuffledns")
             all_subs |= self.read_lines(out)

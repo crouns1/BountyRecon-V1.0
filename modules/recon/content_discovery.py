@@ -38,11 +38,12 @@ class ContentDiscovery(BaseModule):
                 self.log(f"No wordlist found, skipping directory fuzzing", level="warn")
                 wordlist = None
 
-        if wordlist and cfg.get("use_ffuf", True) and self.tool_exists("ffuf"):
-            for i, url in enumerate(urls[:cfg.get("max_targets", 30)], 1):
+        if wordlist and self.config_get("use_ffuf", True) and self.tool_exists("ffuf"):
+            max_targets = self.config_get("max_targets", 30)
+            for i, url in enumerate(urls[:max_targets], 1):
                 safe = url.replace("://", "_").replace("/", "_").replace(":", "_")[:80]
                 out = self.phase_dir / f"ffuf_{safe}.json"
-                self.log(f"[{i}/{min(len(urls), cfg.get('max_targets', 30))}] Fuzzing {url}")
+                self.log(f"[{i}/{min(len(urls), max_targets)}] Fuzzing {url}")
                 self.exec([
                     "ffuf", "-u", f"{url.rstrip('/')}/FUZZ",
                     "-w", wordlist,
@@ -75,7 +76,7 @@ class ContentDiscovery(BaseModule):
             out = self.phase_dir / "katana.txt"
             self.exec([
                 "katana", "-list", str(url_file),
-                "-d", str(cfg.get("crawl_depth", 3)),
+                "-d", str(self.config_get("crawl_depth", 3, "katana_depth")),
                 "-jc", "-kf", "all",
                 "-rate-limit", str(cfg.get("rate_limit", 100)),
                 "-silent", "-o", str(out),
@@ -91,13 +92,18 @@ class ContentDiscovery(BaseModule):
             self.exec([
                 "gospider", "-S", str(url_file),
                 "-o", str(out_dir), "-t", "5",
-                "-d", str(cfg.get("crawl_depth", 3)),
+                "-d", str(self.config_get("crawl_depth", 3, "katana_depth")),
                 "--sitemap", "--robots", "-q",
             ], timeout=1200, label="gospider")
 
         self.write_json(self.phase_dir / "all_findings.json", all_findings)
         found_urls = [f["url"] for f in all_findings if f.get("url")]
         self.write_lines(self.phase_dir / "discovered_endpoints.txt", found_urls)
+
+        combined_urls = set(self.ctx.get("gathered_urls", []))
+        combined_urls.update(found_urls)
+        combined_urls.update(self.ctx.get("crawled_urls", []))
+        self.ctx["gathered_urls"] = sorted(combined_urls)
 
         self.log(f"Endpoints discovered: {len(all_findings)}")
         self.ctx["dir_findings"] = all_findings

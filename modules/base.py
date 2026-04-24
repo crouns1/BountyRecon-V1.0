@@ -12,9 +12,8 @@ All modules inherit from BaseModule, providing:
 import subprocess
 import shutil
 import json
-import time
 from pathlib import Path
-from typing import List, Dict, Optional, Set
+from typing import Any, List, Dict, Optional, Set
 
 
 class BaseModule:
@@ -63,6 +62,13 @@ class BaseModule:
 
     def tool_exists(self, tool: str) -> bool:
         return shutil.which(tool) is not None
+
+    def config_get(self, key: str, default: Any = None, *aliases: str) -> Any:
+        """Read a config value with backward-compatible aliases."""
+        for candidate in (key, *aliases):
+            if candidate in self.config:
+                return self.config[candidate]
+        return default
 
     # ------------------------------------------------------------------
     # Subprocess helpers

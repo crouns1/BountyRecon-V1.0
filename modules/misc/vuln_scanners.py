@@ -30,18 +30,20 @@ class VulnScanners(BaseModule):
 
             cmd = [
                 "nuclei", "-l", str(url_file),
-                "-severity", cfg.get("severity", "critical,high,medium"),
-                "-rate-limit", str(cfg.get("rate_limit", 100)),
-                "-bulk-size", str(cfg.get("bulk_size", 25)),
+                "-severity", self.config_get("severity", "critical,high,medium", "nuclei_severity"),
+                "-rate-limit", str(self.config_get("rate_limit", 100, "nuclei_rate_limit")),
+                "-bulk-size", str(self.config_get("bulk_size", 25, "nuclei_bulk_size")),
                 "-silent", "-jsonl", "-o", str(json_out),
                 "-no-interactsh",
             ]
 
-            templates = cfg.get("templates", [])
+            templates = self.config_get("templates", [], "nuclei_templates")
             for t in templates:
                 cmd.extend(["-t", t])
 
-            exclude = cfg.get("exclude_templates", ["dos/", "fuzzing/"])
+            exclude = self.config_get(
+                "exclude_templates", ["dos/", "fuzzing/"], "nuclei_exclude_templates"
+            )
             for et in exclude:
                 cmd.extend(["-exclude-templates", et])
 

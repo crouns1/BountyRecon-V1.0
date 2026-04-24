@@ -71,6 +71,10 @@ class GitExposure(BaseModule):
                         "git-dumper", f"{base_url}/.git/", str(dump_dir),
                     ], timeout=300, label="git-dumper")
 
+        critical = [f for f in self.findings if f.get("severity") in ("critical", "high")]
+        if critical:
+            self.ctx.setdefault("vuln_findings", []).extend(critical)
+
         self.write_json(self.phase_dir / "git_findings.json", self.findings)
         self.log(f"Git exposure findings: {len(self.findings)}")
         return self.get_results()
